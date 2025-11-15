@@ -58,7 +58,28 @@ int main() {
     dim3 gridDim((K + blockDim.x - 1) / blockDim.x,
         (M + blockDim.y - 1) / blockDim.y);
 
+    // Timer setup
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // TIMER START 
+    cudaEventRecord(start);
+
     matrixMultiplyKernel << <gridDim, blockDim >> > (d_A, d_B, d_C, M, N, K);
+
+    // TIMER END 
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float ms = 0.0f;
+    cudaEventElapsedTime(&ms, start, stop);
+    std::cout << "Kernel time: " << ms << " ms\n";
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+
     checkCuda(cudaGetLastError(), "Kernel launch");
 
     checkCuda(cudaMemcpy(h_C, d_C, sizeC, cudaMemcpyDeviceToHost), "Copying C back");
